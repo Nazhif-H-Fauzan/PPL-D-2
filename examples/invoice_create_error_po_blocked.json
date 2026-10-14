@@ -1,0 +1,11 @@
+{
+  "status": "error",
+  "code": "PO_NOT_FOUND_OR_BLOCKED",
+  "message": "Penagihan diblokir: PO belum tersedia",
+  "details": {
+    "terminId": "trm-demo-003",
+    "projectId": "prj-demo-002",
+    "poStatus": "PO_TIDAK_ADA",
+    "reason": "Proyek terkait belum memiliki Purchase Order resmi yang disetujui di modul D-1."
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "status": "success",
+  "message": "Daftar termin siap ditagih berhasil dimuat",
+  "data": {
+    "items": [
+      {
+        "terminId": "trm-demo-001",
+        "terminNumber": 1,
+        "terminValue": "100000000.00",
+        "dueDate": "2026-10-15",
+        "status": "SIAP_DITAGIH",
+        "contractId": "ktr-demo-001",
+        "contractNumber": "KTR/2026/001",
+        "projectId": "prj-demo-001",
+        "poStatus": "PO_ADA"
+      },
+      {
+        "terminId": "trm-demo-002",
+        "terminNumber": 2,
+        "terminValue": "150000000.00",
+        "dueDate": "2026-12-15",
+        "status": "SIAP_DITAGIH",
+        "contractId": "ktr-demo-001",
+        "contractNumber": "KTR/2026/001",
+        "projectId": "prj-demo-001",
+        "poStatus": "PO_ADA"
+      },
+      {
+        "terminId": "trm-demo-003",
+        "terminNumber": 1,
+        "terminValue": "80000000.00",
+        "dueDate": "2026-10-20",
+        "status": "SIAP_DITAGIH",
+        "contractId": "ktr-demo-004",
+        "contractNumber": "KTR/2026/004",
+        "projectId": "prj-demo-002",
+        "poStatus": "PO_TIDAK_ADA"
+      }
+    ],
+    "page": 1,
+    "pageSize": 20,
+    "totalItems": 3
+  }
+}

@@ -1,0 +1,849 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "API Kontrak Komersial, Termin, dan Invoice (Modul D-2)",
+    "description": "Spesifikasi REST API untuk Modul D-2 (Kontrak komersial, termin, dan invoice) pada sistem Enterprise Resource Planning (ERP) PT Anaheim Nimbus Universal.\n\nSpesifikasi ini disusun untuk memenuhi tugas Mata Kuliah Proyek Perangkat Lunak - Pertemuan 3.\n\nKelompok: 2 / D\nPenyusun: Rudol Prasetyo Sinurat (233040152) & Roy Martin Silaban (233040130)\nReviewer: Wanda Gusdya Purnama, ST., MT.",
+    "version": "0.1.0",
+    "contact": {
+      "name": "Tim Pengembang Modul D-2 (Kelompok 2 - Kelas D)"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Server Pengembangan Lokal"
+    },
+    {
+      "url": "https://erp-staging.anu.co.id",
+      "description": "Server Staging Lingkungan Uji"
+    }
+  ],
+  "security": [
+    {
+      "BearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/v1/termins": {
+      "get": {
+        "tags": ["Termin"],
+        "summary": "Menampilkan daftar termin siap ditagih beserta status PO",
+        "description": "Mengambil daftar rencana termin kontrak dengan filter ID proyek dan status penagihan.\nData termin diperkaya dengan informasi status PO (poStatus) dari Modul D-1 untuk keperluan UI-K02-01.",
+        "operationId": "getTermins",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "description": "ID proyek kanonis dari Modul D-1. Jika dikosongkan, menampilkan semua proyek.",
+            "schema": {
+              "type": "string",
+              "example": "prj-demo-001"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "description": "Status termin penagihan. Bawaan adalah SIAP_DITAGIH.",
+            "schema": {
+              "type": "string",
+              "enum": ["BELUM_SIAP", "SIAP_DITAGIH", "SUDAH_DITAGIHKAN"],
+              "default": "SIAP_DITAGIH"
+            },
+            "example": "SIAP_DITAGIH"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Nomor halaman data (mulai dari 1).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            },
+            "example": 1
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "Jumlah baris data per halaman (rentang 1-100).",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "example": 20
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar termin berhasil dimuat (daftar kosong tetap 200 dengan items []).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Parameter request tidak valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token autentikasi tidak ada atau tidak valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Hak akses ditolak; pemanggil bukan petugas keuangan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Proyek dengan projectId yang diberikan tidak ditemukan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Layanan eksternal D-1 tidak dapat dihubungi.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/invoices": {
+      "post": {
+        "tags": ["Invoice"],
+        "summary": "Membuat invoice baru dari termin yang siap ditagih",
+        "description": "Menyimpan penerbitan invoice per termin (UI-K02-02 / FTR-K02-04).\nSistem menghitung nilai PPN, PPh, dan total tagihan berdasarkan parameter pajak yang berlaku.\nSistem memverifikasi ketersediaan PO di D-1 (poReceived = true) dan keabsahan klien resmi (isTemporaryClient = false).\nSetelah invoice tersimpan, status termin otomatis berubah menjadi SUDAH_DITAGIHKAN.",
+        "operationId": "createInvoice",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInvoiceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Invoice berhasil dibuat dan status termin menjadi SUDAH_DITAGIHKAN.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateInvoiceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validasi input gagal.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token tidak valid atau sesi kadaluarsa.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Pengguna bukan petugas keuangan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Termin dengan terminId tidak ditemukan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Termin belum berstatus siap ditagih atau sudah memiliki invoice.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Aturan bisnis penagihan dilanggar (PO belum tersedia atau klien masih sementara).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Layanan D-1 tidak dapat dihubungi saat pengecekan PO/klien.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/invoices/{invoiceId}": {
+      "get": {
+        "tags": ["Invoice"],
+        "summary": "Mengambil detail lengkap invoice, status tagihan, dan keterkaitannya",
+        "description": "Menampilkan rincian invoice (UI-K02-03), riwayat perubahan status penagihan, serta keterkaitan telusur ke termin, kontrak, proyek, dan PO.",
+        "operationId": "getInvoiceDetail",
+        "parameters": [
+          {
+            "name": "invoiceId",
+            "in": "path",
+            "required": true,
+            "description": "ID unik invoice (UUID D-2).",
+            "schema": {
+              "type": "string"
+            },
+            "example": "inv-demo-001"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detail invoice berhasil ditemukan dan dimuat.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Token tidak valid.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Peran bukan petugas keuangan atau modul konsumen yang berwenang.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invoice dengan ID tersebut tidak ditemukan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/tax-parameters/applicable": {
+      "get": {
+        "tags": ["Pajak"],
+        "summary": "Mengambil tarif parameter PPN dan PPh yang berlaku",
+        "description": "Mengambil parameter pajak aktif yang berlaku untuk simulasi dan perhitungan pembuatan invoice di UI-K02-02.",
+        "operationId": "getApplicableTaxParameters",
+        "parameters": [
+          {
+            "name": "contractId",
+            "in": "query",
+            "required": false,
+            "description": "ID kontrak jika terdapat tarif khusus kontrak.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "in": "query",
+            "required": false,
+            "description": "Tanggal acuan tarif pajak.",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tarif pajak berhasil dimuat.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxParameterResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contracts": {
+      "post": {
+        "tags": ["Kontrak"],
+        "summary": "Mencatat kontrak komersial baru yang terikat ke proyek kanonis D-1",
+        "description": "Menyimpan data kontrak komersial sebagai dasar nilai dan penagihan termin (FTR-K02-02 / ENT-K02-02).",
+        "operationId": "createContract",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateContractRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Kontrak berhasil disimpan.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token Bearer JWT yang diterbitkan oleh Modul Akun & Autentikasi (F-1)."
+      }
+    },
+    "schemas": {
+      "TerminItem": {
+        "type": "object",
+        "required": [
+          "terminId",
+          "terminNumber",
+          "terminValue",
+          "dueDate",
+          "status",
+          "contractId",
+          "contractNumber",
+          "projectId"
+        ],
+        "properties": {
+          "terminId": {
+            "type": "string",
+            "example": "trm-demo-001"
+          },
+          "terminNumber": {
+            "type": "integer",
+            "example": 1
+          },
+          "terminValue": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d{2})?$",
+            "example": "100000000.00"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-15"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["BELUM_SIAP", "SIAP_DITAGIH", "SUDAH_DITAGIHKAN"],
+            "example": "SIAP_DITAGIH"
+          },
+          "contractId": {
+            "type": "string",
+            "example": "ktr-demo-001"
+          },
+          "contractNumber": {
+            "type": "string",
+            "example": "KTR/2026/001"
+          },
+          "projectId": {
+            "type": "string",
+            "example": "prj-demo-001"
+          },
+          "poStatus": {
+            "type": "string",
+            "nullable": true,
+            "enum": ["PO_ADA", "PO_TIDAK_ADA"],
+            "example": "PO_ADA"
+          }
+        }
+      },
+      "TerminListResponse": {
+        "type": "object",
+        "required": ["status", "data"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "message": {
+            "type": "string",
+            "example": "Daftar termin siap ditagih berhasil dimuat"
+          },
+          "data": {
+            "type": "object",
+            "required": ["items", "page", "pageSize", "totalItems"],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TerminItem"
+                }
+              },
+              "page": {
+                "type": "integer",
+                "example": 1
+              },
+              "pageSize": {
+                "type": "integer",
+                "example": 20
+              },
+              "totalItems": {
+                "type": "integer",
+                "example": 3
+              }
+            }
+          }
+        }
+      },
+      "CreateInvoiceRequest": {
+        "type": "object",
+        "required": ["terminId", "invoiceDate", "dppAmount"],
+        "properties": {
+          "terminId": {
+            "type": "string",
+            "example": "trm-demo-001"
+          },
+          "invoiceDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-01"
+          },
+          "dppAmount": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d{2})?$",
+            "example": "100000000.00"
+          }
+        }
+      },
+      "CreateInvoiceResponse": {
+        "type": "object",
+        "required": ["status", "message", "data"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "message": {
+            "type": "string",
+            "example": "Invoice INV-2026-0001 berhasil dibuat"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "invoiceId",
+              "invoiceNumber",
+              "terminId",
+              "invoiceDate",
+              "dppAmount",
+              "ppnAmount",
+              "pphAmount",
+              "totalAmount",
+              "taxParamId",
+              "status",
+              "createdBy",
+              "createdAt"
+            ],
+            "properties": {
+              "invoiceId": {
+                "type": "string",
+                "example": "inv-demo-001"
+              },
+              "invoiceNumber": {
+                "type": "string",
+                "example": "INV-2026-0001"
+              },
+              "terminId": {
+                "type": "string",
+                "example": "trm-demo-001"
+              },
+              "invoiceDate": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-11-01"
+              },
+              "dppAmount": {
+                "type": "string",
+                "example": "100000000.00"
+              },
+              "ppnAmount": {
+                "type": "string",
+                "example": "11000000.00"
+              },
+              "pphAmount": {
+                "type": "string",
+                "example": "2000000.00"
+              },
+              "totalAmount": {
+                "type": "string",
+                "example": "109000000.00"
+              },
+              "taxParamId": {
+                "type": "string",
+                "example": "pjk-demo-001"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["TERTAGIH", "TERBAYAR"],
+                "example": "TERTAGIH"
+              },
+              "createdBy": {
+                "type": "string",
+                "example": "emp-demo-012"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2026-11-01T02:00:00Z"
+              }
+            }
+          }
+        }
+      },
+      "InvoiceDetailResponse": {
+        "type": "object",
+        "required": ["status", "data"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "message": {
+            "type": "string",
+            "example": "Detail invoice berhasil dimuat"
+          },
+          "data": {
+            "type": "object",
+            "required": [
+              "invoiceId",
+              "invoiceNumber",
+              "invoiceDate",
+              "dppAmount",
+              "ppnAmount",
+              "pphAmount",
+              "totalAmount",
+              "status",
+              "terkait",
+              "riwayat"
+            ],
+            "properties": {
+              "invoiceId": {
+                "type": "string",
+                "example": "inv-demo-001"
+              },
+              "invoiceNumber": {
+                "type": "string",
+                "example": "INV-2026-0001"
+              },
+              "invoiceDate": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-11-01"
+              },
+              "dppAmount": {
+                "type": "string",
+                "example": "100000000.00"
+              },
+              "ppnAmount": {
+                "type": "string",
+                "example": "11000000.00"
+              },
+              "pphAmount": {
+                "type": "string",
+                "example": "2000000.00"
+              },
+              "totalAmount": {
+                "type": "string",
+                "example": "109000000.00"
+              },
+              "status": {
+                "type": "string",
+                "enum": ["TERTAGIH", "TERBAYAR"],
+                "example": "TERTAGIH"
+              },
+              "terkait": {
+                "type": "object",
+                "required": [
+                  "terminId",
+                  "terminNumber",
+                  "contractId",
+                  "contractNumber",
+                  "projectId"
+                ],
+                "properties": {
+                  "terminId": {
+                    "type": "string",
+                    "example": "trm-demo-001"
+                  },
+                  "terminNumber": {
+                    "type": "integer",
+                    "example": 1
+                  },
+                  "contractId": {
+                    "type": "string",
+                    "example": "ktr-demo-001"
+                  },
+                  "contractNumber": {
+                    "type": "string",
+                    "example": "KTR/2026/001"
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "example": "prj-demo-001"
+                  },
+                  "poStatus": {
+                    "type": "string",
+                    "nullable": true,
+                    "example": "PO_ADA"
+                  }
+                }
+              },
+              "riwayat": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["status", "changedAt", "changedBy"],
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "TERTAGIH"
+                    },
+                    "changedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "example": "2026-11-01T02:00:00Z"
+                    },
+                    "changedBy": {
+                      "type": "string",
+                      "example": "emp-demo-012"
+                    },
+                    "note": {
+                      "type": "string",
+                      "example": "Invoice diterbitkan oleh petugas keuangan"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "TaxParameterResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "taxParamId": {
+                "type": "string",
+                "example": "pjk-demo-001"
+              },
+              "contractId": {
+                "type": "string",
+                "nullable": true,
+                "example": null
+              },
+              "ppnRate": {
+                "type": "string",
+                "example": "11.00"
+              },
+              "pphRate": {
+                "type": "string",
+                "example": "2.00"
+              },
+              "effectiveFrom": {
+                "type": "string",
+                "format": "date",
+                "example": "2026-01-01"
+              },
+              "effectiveTo": {
+                "type": "string",
+                "format": "date",
+                "nullable": true,
+                "example": null
+              }
+            }
+          }
+        }
+      },
+      "CreateContractRequest": {
+        "type": "object",
+        "required": ["projectId", "contractNumber", "contractValue"],
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "example": "prj-demo-001"
+          },
+          "contractNumber": {
+            "type": "string",
+            "maxLength": 50,
+            "example": "KTR/2026/001"
+          },
+          "contractValue": {
+            "type": "string",
+            "pattern": "^\\d+(\\.\\d{2})?$",
+            "example": "500000000.00"
+          }
+        }
+      },
+      "ContractResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "success"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "contractId": {
+                "type": "string",
+                "example": "ktr-demo-001"
+              },
+              "projectId": {
+                "type": "string",
+                "example": "prj-demo-001"
+              },
+              "contractNumber": {
+                "type": "string",
+                "example": "KTR/2026/001"
+              },
+              "contractValue": {
+                "type": "string",
+                "example": "500000000.00"
+              },
+              "createdBy": {
+                "type": "string",
+                "example": "emp-demo-007"
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "example": "2026-10-08T03:15:00Z"
+              }
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["status", "message"],
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "error"
+          },
+          "code": {
+            "type": "string",
+            "example": "VALIDATION_ERROR"
+          },
+          "message": {
+            "type": "string",
+            "example": "Terjadi kesalahan pada data masukan"
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "details": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

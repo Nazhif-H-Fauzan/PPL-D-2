@@ -1,0 +1,14 @@
+{
+  "status": "error",
+  "code": "VALIDATION_ERROR",
+  "message": "Validasi masukan gagal",
+  "errors": {
+    "dppAmount": [
+      "DPP wajib diisi",
+      "DPP harus lebih dari 0"
+    ],
+    "invoiceDate": [
+      "Tanggal invoice wajib diisi"
+    ]
+  }
+}
