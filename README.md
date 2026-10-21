@@ -20,31 +20,36 @@ Pengujian API dilakukan secara langsung di dalam Visual Studio Code menggunakan 
 
 ---
 
-#### Langkah 2: Membuka Spesifikasi ke Thunder Client
+#### Langkah 2: Pengaturan Token Autentikasi (Bebas Error 401 Unauthorized)
+Seluruh endpoint Modul D-2 dilindungi otentikasi peran Petugas Keuangan. Agar penguji tidak perlu repot mengisi token satu per satu di setiap request:
 
-Impor Langsung dari Berkas OpenAPI (`openapi.yaml` / `openapi.json`)
-1. Klik ikon **Thunder Client** (⚡) -> tab **Collections**.
-2. Klik ikon menu opsi **`...`** -> pilih **Import**.
-3. Pada jendela yang muncul, pilih opsi/tab **OpenAPI**.
-4. Arahkan dan pilih berkas [openapi.yaml] atau [openapi.json]
-5. Klik **Import**. Seluruh folder dan endpoint dari OpenAPI akan otomatis di-*generate* menjadi request Thunder Client.
+**Setting:**
+1. Di panel kiri Thunder Client, buka tab **Collections**.
+2. buat collection baru. 
+3. Klik ikon titik tiga (**`...`**) pada nama koleksi yang baru dibuat $\rightarrow$ pilih **Settings**.
+4. Buka tab **Auth** $\rightarrow$ pada dropdown pilih **Bearer Token**.
+5. Masukkan token:
+   ```text
+   emp-demo-012
+   ```
+5. Klik **Save**.
+6. **Selesai!** Seluruh request di dalam koleksi otomatis terautentikasi dan tidak akan terkena error `401 Unauthorized`.
+
+*(Catatan: Anda juga dapat memasukkan token per-request melalui tab **Auth** $\rightarrow$ **Bearer Token** pada masing-masing request).*
 
 ---
 
-#### Langkah 3: Menjalankan Request Pengujian di Thunder Client
-1. Pastikan server lokal backend Laravel sedang aktif:
+#### Langkah 4: Menjalankan Request Pengujian di Thunder Client
+1. Pastikan server lokal backend Laravel sedang aktif di terminal:
    ```bash
    php artisan serve
    ```
    *(Server aktif di `http://127.0.0.1:8000`)*
-2. Buka salah satu request di tab **Thunder Client** -> **Collections**, contoh:
-   * **`1. GET Daftar Termin Siap Ditagih (200 OK)`**
-   * **`3. POST Terbitkan Invoice Baru - Sukses (201 Created)`**
-   * **`4. POST Invoice - Penolakan PO Belum Tersedia (422 PO Blocked)`**
-3. Periksa tab **Headers**, pastikan header berikut terpasang:
-   * `Authorization`: `Bearer emp-demo-012`
-   * `Accept`: `application/json`
-4. Klik tombol biru **Send**. Respon status (200, 201, 400, 422) dan data JSON akan langsung tampil di panel sebelah kanan.
+2. Buka salah satu request di tab **Thunder Client** $\rightarrow$ **Collections**, contoh:
+   * **`GET /api/v1/termins`** (Daftar termin siap ditagih & status PO D-1)
+   * **`POST /api/v1/invoices`** (Penerbitan invoice baru per termin)
+   * **`GET /api/v1/invoices/{invoiceId}`** (Detail lengkap invoice & riwayat)
+3. Klik tombol biru **Send**. Respon status (200, 201, 400, 422) beserta data JSON akan langsung tampil di panel sebelah kanan!
 
 ---
 
@@ -67,13 +72,7 @@ Untuk menyiapkan database SQLite lokal beserta data contoh OpenAPI:
 php artisan migrate:fresh --seed
 ```
 
-#### B. Menjalankan Automated Feature Test
-Untuk memverifikasi seluruh aturan bisnis dan status kode HTTP:
-```bash
-php artisan test --filter=ModulD2ApiTest
-```
-
-#### C. Menjalankan Server Lokal
+#### B. Menjalankan Server Lokal
 ```bash
 php artisan serve
 ```
