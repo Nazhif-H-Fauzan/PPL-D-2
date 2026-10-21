@@ -8,9 +8,6 @@ Berkas ini memuat dokumentasi API, panduan membuka dan menguji spesifikasi OpenA
 ### 1. Berkas Spesifikasi OpenAPI
 * **YAML**: [openapi.yaml](file:///c:/Users/ayupu/laravel-app/openapi.yaml) (atau `docs/openapi.yaml`)
 * **JSON**: [openapi.json](file:///c:/Users/ayupu/laravel-app/openapi.json) (atau `docs/openapi.json`)
-* **Koleksi Siap Pakai Thunder Client**: [thunder-collection_modul_d2.json](file:///c:/Users/ayupu/laravel-app/thunder-collection_modul_d2.json)
-
----
 
 ### 2. Cara Membuka & Menguji Spesifikasi OpenAPI Menggunakan Thunder Client
 
@@ -23,22 +20,13 @@ Pengujian API dilakukan secara langsung di dalam Visual Studio Code menggunakan 
 
 ---
 
-#### Langkah 2: Membuka Spesifikasi ke Thunder Client (Dua Pilihan Cara)
+#### Langkah 2: Membuka Spesifikasi ke Thunder Client
 
-##### Pilihan A: Impor Berkas Koleksi Siap Pakai (Sangat Direkomendasikan)
-Koleksi lengkap beserta contoh body dan header otentikasi telah disiapkan di berkas `thunder-collection_modul_d2.json`:
-1. Klik ikon **Thunder Client** (⚡) pada bilah kiri VS Code.
-2. Buka tab **Collections**.
-3. Klik ikon menu opsi **`...`** (di sebelah kanan tulisan *Collections*).
-4. Pilih **Import**.
-5. Pilih berkas [thunder-collection_modul_d2.json](file:///c:/Users/ayupu/laravel-app/thunder-collection_modul_d2.json) dari root proyek.
-6. Koleksi **"Modul D-2 ERP (Kontrak, Termin, Invoice)"** akan langsung muncul lengkap dengan 8 skenario pengujian (sukses 200/201, validasi 400, izin 403, penolakan PO 422, dsb.).
-
-##### Pilihan B: Impor Langsung dari Berkas OpenAPI (`openapi.yaml` / `openapi.json`)
+Impor Langsung dari Berkas OpenAPI (`openapi.yaml` / `openapi.json`)
 1. Klik ikon **Thunder Client** (⚡) -> tab **Collections**.
 2. Klik ikon menu opsi **`...`** -> pilih **Import**.
 3. Pada jendela yang muncul, pilih opsi/tab **OpenAPI**.
-4. Arahkan dan pilih berkas [openapi.yaml](file:///c:/Users/ayupu/laravel-app/openapi.yaml) atau [openapi.json](file:///c:/Users/ayupu/laravel-app/openapi.json).
+4. Arahkan dan pilih berkas [openapi.yaml] atau [openapi.json]
 5. Klik **Import**. Seluruh folder dan endpoint dari OpenAPI akan otomatis di-*generate* menjadi request Thunder Client.
 
 ---
